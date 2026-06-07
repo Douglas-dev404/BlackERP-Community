@@ -1,5 +1,8 @@
 package com.blackerp.auth;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,8 +41,32 @@ public class AuthService {
         userRepository.save(user);
 
         var principal = new UserPrincipal(user);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole().name());
+
         return AuthResponse.of(
-                jwtService.generateToken(principal),
+                jwtService.generateToken(claims, principal),
+                jwtService.generateRefreshToken(principal)
+        );
+    }
+
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        String email = jwtService.extractUsername(request.refreshToken());
+
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> ApiException.notFound("Usuário não encontrado"));
+
+        var principal = new UserPrincipal(user);
+
+        if (!jwtService.isTokenValid(request.refreshToken(), principal)) {
+            throw ApiException.badRequest("Refresh token inválido ou expirado");
+        }
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole().name());
+
+        return AuthResponse.of(
+                jwtService.generateToken(claims, principal),
                 jwtService.generateRefreshToken(principal)
         );
     }
@@ -53,8 +80,10 @@ public class AuthService {
                 .orElseThrow(() -> ApiException.notFound("Usuário não encontrado"));
 
         var principal = new UserPrincipal(user);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole().name());
         return AuthResponse.of(
-                jwtService.generateToken(principal),
+                jwtService.generateToken(claims, principal),
                 jwtService.generateRefreshToken(principal)
         );
     }
