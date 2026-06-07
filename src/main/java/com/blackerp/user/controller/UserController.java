@@ -16,12 +16,14 @@ import com.blackerp.user.dto.UserResponse;
 import com.blackerp.user.dto.UserUpdateRequest;
 import com.blackerp.user.service.UserService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final UserService userService;
